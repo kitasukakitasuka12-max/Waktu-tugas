@@ -1,7 +1,18 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { CommissionData } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Helper to safely access process.env without crashing in browser environments
+const getApiKey = () => {
+  try {
+    return (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const apiKey = getApiKey();
+// Only initialize AI if API key is present to avoid constructor errors or runtime crashes
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 // Fallback data in case API key is missing or fails
 const FALLBACK_DATA: CommissionData = {
@@ -12,8 +23,8 @@ const FALLBACK_DATA: CommissionData = {
 };
 
 export const generateCommissionReport = async (): Promise<CommissionData> => {
-  if (!process.env.API_KEY) {
-    console.warn("API Key not found, returning fallback data.");
+  if (!ai) {
+    console.warn("API Key not found or process.env unavailable, returning fallback data.");
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     return FALLBACK_DATA;
